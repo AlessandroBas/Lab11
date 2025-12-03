@@ -1,5 +1,8 @@
 import networkx as nx
+from networkx.algorithms.components import connected_components
+
 from database.dao import DAO
+from model import connessione
 
 
 class Model:
@@ -14,6 +17,21 @@ class Model:
         :param year: anno limite fino al quale selezionare le connessioni da includere.
         """
         # TODO
+        self._edges = DAO.read_connessioni(year)
+        self._nodes = DAO.read_rifugi()
+        self.G.clear()
+        mappa_rifugi = {rifugio.id: rifugio for rifugio in self._nodes}
+
+        for connessione in self._edges:
+            r1 = connessione.id_rifugio1
+            r2 = connessione.id_rifugio2
+            if r1 in mappa_rifugi:
+                self.G.add_node(r1, obj=mappa_rifugi[r1])
+            if r2 in mappa_rifugi:
+                self.G.add_node(r2, obj=mappa_rifugi[r2])
+            self.G.add_edge(r1, r2)
+
+        print(self.G)
 
     def get_nodes(self):
         """
@@ -21,6 +39,8 @@ class Model:
         :return: lista dei rifugi presenti nel grafo.
         """
         # TODO
+        return self.G.nodes()
+
 
     def get_num_neighbors(self, node):
         """
@@ -29,6 +49,8 @@ class Model:
         :return: numero di vicini diretti del nodo indicato
         """
         # TODO
+        albero = nx.dfs_tree(self.G, node)
+        return len(albero.nodes)
 
     def get_num_connected_components(self):
         """
@@ -36,6 +58,9 @@ class Model:
         :return: numero di componenti connesse
         """
         # TODO
+        return connected_components(self.G)
+
+
 
     def get_reachable(self, start):
         """
