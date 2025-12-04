@@ -1,6 +1,7 @@
 from database.DB_connect import DBConnect
 from model.rifugio import Rifugio
 from model.connessione import Connessione
+
 class DAO:
     """
         Implementare tutte le funzioni necessarie a interrogare il database.
@@ -9,24 +10,23 @@ class DAO:
     pass
 
     @staticmethod
-    def read_rifugi():
+    def read_rifugi(anno):
         cnx = DBConnect.get_connection()
         result = []
         if cnx is None:
             print("❌ Errore di connessione al database.")
             return None
-        query = """ SELECT * 
-                    FROM rifugio """
+        query = """ SELECT r.* 
+                    FROM rifugio r, connessione c
+                    WHERE (c.id_rifugio1 = r.id OR c.id_rifugio2 = r.id) 
+                    AND c.anno <= %s"""
         cursor = cnx.cursor(dictionary=True)
         try:
-            cursor.execute(query)
+            cursor.execute(query,(anno, ))
             for row in cursor:
                 rifugio = Rifugio(row["id"],
                           row["nome"],
-                          row["localita"],
-                          row["altitudine"],
-                          row["capienza"],
-                          row["aperto"],)
+                          row["localita"],)
                 result.append(rifugio)
         except Exception as e:
             print(f"Errore durante la query read_rifugi: {e}")
@@ -45,7 +45,7 @@ class DAO:
             return None
         query = """ SELECT *
                     FROM connessione
-                    WHERE ANNO <= %s"""
+                    WHERE anno <= %s"""
         cursor = cnx.cursor(dictionary=True)
         try:
             cursor.execute(query,(anno,))

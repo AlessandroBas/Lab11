@@ -1,9 +1,5 @@
 import networkx as nx
-from networkx.algorithms.components import connected_components
-
 from database.dao import DAO
-from model import connessione
-
 
 class Model:
     def __init__(self):
@@ -18,20 +14,17 @@ class Model:
         """
         # TODO
         self._edges = DAO.read_connessioni(year)
-        self._nodes = DAO.read_rifugi()
+        self._nodes = DAO.read_rifugi(year)
         self.G.clear()
-        mappa_rifugi = {rifugio.id: rifugio for rifugio in self._nodes}
+        self._mappa_rifugi = {rifugio.id: rifugio for rifugio in self._nodes}
 
         for connessione in self._edges:
             r1 = connessione.id_rifugio1
             r2 = connessione.id_rifugio2
-            if r1 in mappa_rifugi:
-                self.G.add_node(r1, obj=mappa_rifugi[r1])
-            if r2 in mappa_rifugi:
-                self.G.add_node(r2, obj=mappa_rifugi[r2])
-            self.G.add_edge(r1, r2)
-
-        print(self.G)
+            if r1 in self._mappa_rifugi and r2 in self._mappa_rifugi :
+                self.G.add_node(r1, obj=self._mappa_rifugi[r1])
+                self.G.add_node(r2, obj=self._mappa_rifugi[r2])
+                self.G.add_edge(r1, r2)
 
     def get_nodes(self):
         """
@@ -39,7 +32,7 @@ class Model:
         :return: lista dei rifugi presenti nel grafo.
         """
         # TODO
-        return self.G.nodes()
+        return self._mappa_rifugi.values()
 
 
     def get_num_neighbors(self, node):
@@ -49,8 +42,8 @@ class Model:
         :return: numero di vicini diretti del nodo indicato
         """
         # TODO
-        albero = nx.dfs_tree(self.G, node)
-        return len(albero.nodes)
+        rifugio = node.id
+        return self.G.degree[rifugio]
 
     def get_num_connected_components(self):
         """
@@ -58,9 +51,7 @@ class Model:
         :return: numero di componenti connesse
         """
         # TODO
-        return connected_components(self.G)
-
-
+        return nx.number_connected_components(self.G)
 
     def get_reachable(self, start):
         """
@@ -80,3 +71,27 @@ class Model:
         """
 
         # TODO
+        # MODO 1 dfs_tree()
+        """
+        id_rifugi = list(nx.dfs_tree(self.G, start.id).nodes)
+        result =[self.G.nodes[r]["obj"] for r in id_rifugi]
+        return result[1:]
+        """
+
+        # MODO 2 algoritmo ricorsivo
+
+        id_rifugio = start.id
+        visitati = set()
+        result = []
+
+        def ricorsione (id_rifugio):
+            if id_rifugio in visitati:
+                return
+            visitati.add(id_rifugio)
+
+            result.append(self.G.nodes[id_rifugio]["obj"])
+            for neighbor in self.G.neighbors(id_rifugio):
+                ricorsione(neighbor)
+
+        ricorsione(id_rifugio)
+        return result[1:]
