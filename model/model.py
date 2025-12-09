@@ -83,15 +83,14 @@ class Model:
         id_rifugio = start.id
         visitati = set()
         result = []
+        self.ricorsione(id_rifugio,visitati,result,start_id=id_rifugio)
+        return result
 
-        def ricorsione (id_rifugio):
-            if id_rifugio in visitati:
-                return
-            visitati.add(id_rifugio)
-
+    def ricorsione (self,id_rifugio,visitati,result,start_id):
+        if id_rifugio in visitati:
+            return
+        visitati.add(id_rifugio)
+        if id_rifugio != start_id:
             result.append(self.G.nodes[id_rifugio]["obj"])
-            for neighbor in self.G.neighbors(id_rifugio):
-                ricorsione(neighbor)
-
-        ricorsione(id_rifugio)
-        return result[1:]
+        for neighbor in self.G.neighbors(id_rifugio):
+            self.ricorsione(neighbor,visitati,result,start_id)
